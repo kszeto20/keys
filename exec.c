@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -7,12 +8,29 @@
 
 #include "exec.h"
 
-void executeCommand(char **command) {
-    if (!command[0]) return;
-    if (!strcmp(command[0], "exit")) exit(0);
+int executeCommand(char **command) {
+    if (!command[0]) return 0;
+    if (!strcmp(command[0], "exit")) {
+        if (command[2]) {
+            printf("KEYS: exit: too many arguments\n");
+            return -1;
+        }
+        int exitval = 0;
+        if (command[1]) {
+            exitval = atoi(command[1]);
+        }
+        exit(exitval);
+    }
     if (!strcmp(command[0], "cd")) {
+        if (command[2]) {
+            printf("KEYS: cd: too many arguments\n");
+            return -1;
+        }
         if (!command[1]) command[1] = getenv("HOME");
-        chdir(command[1]);
+        if (chdir(command[1])) {
+            printf("KEYS: cd: %s: %m\n", command[1]);
+        }
+        return -1;
     }
     
     int childpid;
@@ -20,13 +38,15 @@ void executeCommand(char **command) {
         // PARENT
         int wstatus;
         wait(&wstatus);
+        printf("DEBUG: wstatus: %x\n", wstatus);
+        return WEXITSTATUS(wstatus);
     } else {
         // CHILD
         execvp(command[0], command);
     }
 }
 
-void execVarargs(int n, ...) {
+int execVarargs(int n, ...) {
     char **args = malloc(n * sizeof(char *));
     
     va_list varargs;
@@ -39,7 +59,9 @@ void execVarargs(int n, ...) {
     
     va_end(varargs);
     
-    executeCommand(args);
+    int exitcode = executeCommand(args);
     
     free(args);
+    
+    return exitcode;
 }

@@ -1,10 +1,19 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "parser.h"
 #include "exec.h"
 
 void parser_read() {
-  char *line;
-  scanf("%ms", &line);
+  // must be set to NULL and 0 to have getline allocate a string
+  char *line = NULL;
+  unsigned long len = 0;
+  // stops at the first space:
+//   scanf("%ms", &line);
+  getline(&line, &len, stdin);
   parse_command(line);
+  free(line);
 }
 
 void parse_command(char *str) {
@@ -28,4 +37,5 @@ void parse_command(char *str) {
 	result[len-1] = NULL;
   //execute
   executeCommand(result);
+  free(result);
 }
