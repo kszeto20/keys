@@ -3,4 +3,6 @@
 
 void executeCommand(char **command);
 
+void execVarargs(int n, ...);
+
 #endif
