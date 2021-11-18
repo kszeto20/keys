@@ -1,16 +1,19 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "parser.h"
 #include "exec.h"
 
-char ** parse_args(char *line) {
+void parser_read() {
+  char *line;
+  scanf("%ms", &line);
+  parse_command(line);
+}
+
+void parse_command(char *str) {
+  // tokenize
 	int len = 1; // starts at 1 to ensure space for terminating null
 	int cap = 1;
 	char **result = malloc(cap * sizeof(char *));
 	char *token;
-	while (token = strsep(&line, " \n")) {
+	while (token = strsep(&str, " \n")) {
 		// ignore empty tokens
 		if (*token) {
 			result[len-1] = token;
@@ -23,10 +26,6 @@ char ** parse_args(char *line) {
 		}
 	}
 	result[len-1] = NULL;
-	return result;
-}
-
-
-void parser_read() {
-    
+  //execute
+  executeCommand(result);
 }
