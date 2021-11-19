@@ -12,8 +12,11 @@
 #include <dirent.h>
 #include <sys/wait.h>
 
+
 void parser_read();
 
 void parse_command(char *str);
+int listener();
+
 
 #endif
