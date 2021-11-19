@@ -28,7 +28,27 @@ void readline(char **line, unsigned long *len, FILE *stream) {
 	enableinputmode();
 	while (1) {
 		int c = getc(stream);
-		printf("\nc: %c, i: %d\n", c, c);
+    if (c == 27) {
+      c = getc(stream);
+      c = getc(stream);
+      if (c == 65) {
+        printf("UP\n");
+				// to implement: move up one history entry
+      }
+      else if (c ==  66) {
+        printf("DOWN\n");
+				// to implement: move down one history entry
+      }
+      else if (c == 67) {
+        printf("RIGHT\n");
+      }
+      else if (c == 68) {
+        printf("LEFT\n");
+      }
+    }
+    else {
+      printf("\nc: %c, i: %d\n", c, c);
+    }
 	}
 	disableinputmode();
 }
@@ -41,9 +61,9 @@ void parser_read() {
 //   scanf("%ms", &line);
 //   getline(&line, &len, stdin);
 	readline(&line, &len, stdin);
-  
+
   char *linepointer = line;
-  
+
   int shouldStop = 0;
   while (!shouldStop && linepointer != NULL) {
   	shouldStop = parse_command(&linepointer);
@@ -64,7 +84,7 @@ int parse_command(char **str) {
 	int cap = 1;
 	char **result = malloc(cap * sizeof(char *));
 	char *token;
-	
+
 	while (token = strsep(str, " \n")) {
 		// ignore empty tokens
 		if (*token) {
@@ -84,7 +104,7 @@ int parse_command(char **str) {
 				free(result);
 				return !returnVal;
 			}
-			
+
 			result[len-1] = token;
 			// resize if reached end of array
 			if (len == cap) {
