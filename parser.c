@@ -2,8 +2,36 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <termios.h>
+
 #include "parser.h"
 #include "exec.h"
+
+void enableinputmode() {
+	struct termios info;
+	tcgetattr(0, &info);
+	info.c_lflag &= ~ICANON;
+	info.c_cc[VMIN] = 1;
+	info.c_cc[VTIME] = 0;
+	tcsetattr(0, TCSANOW, &info);
+}
+
+void disableinputmode() {
+	struct termios info;
+	tcgetattr(0, &info);
+	info.c_lflag |= ICANON;
+	tcsetattr(0, TCSANOW, &info);
+}
+
+
+void readline(char **line, unsigned long *len, FILE *stream) {
+	enableinputmode();
+	while (1) {
+		int c = getc(stream);
+		printf("\nc: %c, i: %d\n", c, c);
+	}
+	disableinputmode();
+}
 
 void parser_read() {
   // must be set to NULL and 0 to have getline allocate a string
@@ -11,7 +39,8 @@ void parser_read() {
   unsigned long len = 0;
   // stops at the first space:
 //   scanf("%ms", &line);
-  getline(&line, &len, stdin);
+//   getline(&line, &len, stdin);
+	readline(&line, &len, stdin);
   
   char *linepointer = line;
   
