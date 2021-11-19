@@ -22,15 +22,16 @@ int executeCommand(char **command) {
         exit(exitval);
     }
     if (!strcmp(command[0], "cd")) {
-        if (command[2]) {
+        if (command[1] && command[2]) {
             printf("KEYS: cd: too many arguments\n");
             return -1;
         }
         if (!command[1]) command[1] = getenv("HOME");
         if (chdir(command[1])) {
             printf("KEYS: cd: %s: %m\n", command[1]);
+            return -1;
         }
-        return -1;
+        return 0;
     }
     
     int childpid;

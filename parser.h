@@ -14,6 +14,6 @@
 
 void parser_read();
 
-void parse_command(char *str);
+int parse_command(char **str);
 
 #endif
