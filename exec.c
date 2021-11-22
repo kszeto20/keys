@@ -39,11 +39,13 @@ int executeCommand(char **command) {
         // PARENT
         int wstatus;
         wait(&wstatus);
-        printf("DEBUG: wstatus: %x\n", wstatus);
+        printf("\e[91mDEBUG:\e[0m wstatus: %x\n", wstatus);
         return WEXITSTATUS(wstatus);
     } else {
         // CHILD
         execvp(command[0], command);
+        printf("%s: command not found\n", command[0]);
+        exit(-1);
     }
 }
 
