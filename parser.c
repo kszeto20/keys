@@ -6,7 +6,6 @@
 
 #include "parser.h"
 #include "exec.h"
-#include "input.h"
 
 struct cInput {char *input; struct cInput * before; struct cInput * after;};
 
@@ -66,9 +65,10 @@ void write_in (char * toWrite) {
 	//printf("Opening\n");
 	//int out = open(histFile, O_RDWR);
 	//printf("Opened\n");
+	char * orig = open_and_read();
 	int out = creat(histFile, mainMode);
 	//printf("Start reading\n");
-	char * orig = open_and_read();
+	//char * orig = open_and_read();
 	//printf("Finished reading\n");
 	write(out, toWrite, strlen(toWrite));
 	write(out, "\n", 1);
@@ -87,8 +87,9 @@ void parser_read() {
 //   scanf("%ms", &line);
 	//doread();
   getline(&line, &len, stdin);
-	//printf("Got here\n");
+	//printf("Got here");
 	write_in(line);
+	//printf("Got here\n");
 //	readline(&line, &len);
 
   char *linepointer = line;
