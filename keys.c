@@ -16,7 +16,7 @@ int main() {
     if (!input) break;
     printf("\n");
     struct astnode *tree = parsetree(input);
-    // println_astnode(tree); // for debugging
+    println_astnode(tree); // for debugging
     evalnode(tree);
     free_tree(tree);
     free(input);

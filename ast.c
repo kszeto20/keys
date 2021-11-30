@@ -367,13 +367,13 @@ char * findfirsttoplevel(char *str, char **needles, char **loc) {
 // TODO: DOES NOT WORK
 // returns the needle matched, NULL if none found
 // if one is found, `*loc` is set to its location
-// priority is in order of location in haystack, then by reverse order in `needles`
+// priority is in reverse order of location in haystack by the end of the needle, then by order in `needles`
 char * findlasttoplevel(char *str, char **needles, char **loc) {
     // int numneedles;
     // for (numneedles = 0; needles[numneedles]; numneedles++);
     int level = 0;
     int i;
-    for (i = strlen(str) - 1; i >= 0; i--) {
+    for (i = strlen(str); i >= 0; i--) {
         switch (str[i]) {
         case '(':
             level++;
@@ -398,8 +398,9 @@ char * findlasttoplevel(char *str, char **needles, char **loc) {
                 int j;
                 for (j = 0; needles[j]; j++) {
                     char *needle = needles[j];
-                    if (!strncmp(str+i, needle, strlen(needle))) {
-                        *loc = str + i;
+                    int l = strlen(needle);
+                    if (i >= l && !strncmp(str+i-l, needle, l)) {
+                        *loc = str + i - l;
                         return needle;
                     }
                 }
@@ -474,7 +475,7 @@ struct astnode * parsetree(char *str) {
     char *matched;
     // semicolon takes priority
     if (!((conat = findtoplevel(str, ";")) && (matched = ";")))
-        matched = findfirsttoplevel(str, stmt_conj_connectors, &conat);
+        matched = findlasttoplevel(str, stmt_conj_connectors, &conat);
     if (matched) {
         result->kind = stmt_conj;
         // replace connector with 0's
@@ -487,7 +488,7 @@ struct astnode * parsetree(char *str) {
         result->data.stmt_conj_data.statements[1] = parsetree(conat+len);
         return result;
     }
-    matched = findfirsttoplevel(str, redirection_connectors, &conat);
+    matched = findlasttoplevel(str, redirection_connectors, &conat);
     if (matched) {
         result->kind = redirection;
         // replace connector with 0's
