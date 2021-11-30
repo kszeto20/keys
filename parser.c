@@ -37,24 +37,6 @@ void readline(char **line, unsigned long *len) {
 	disableinputmode();
 }
 
-void parser_read() {
-  // must be set to NULL and 0 to have getline allocate a string
-  char *line = NULL;
-  unsigned long len = 0;
-  // stops at the first space:
-//   scanf("%ms", &line);
-   getline(&line, &len, stdin);
-//	readline(&line, &len);
-  
-  char *linepointer = line;
-  
-  int shouldStop = 0;
-  while (!shouldStop && linepointer != NULL) {
-  	shouldStop = parse_command(&linepointer);
-  }
-  free(line);
-}
-
 void print_arr(char **arr) {
 	int i;
 	for (i = 0; arr[i]; i++) {
@@ -62,8 +44,7 @@ void print_arr(char **arr) {
 	}
 }
 
-int parse_command(char **str) {
-  // tokenize
+char **tokenize(char **str) {
 	int len = 1; // starts at 1 to ensure space for terminating null
 	int cap = 1;
 	char **result = malloc(cap * sizeof(char *));
@@ -74,19 +55,20 @@ int parse_command(char **str) {
 		if (*token) {
 			// execute what we have so far if semicolon
 			if (!strcmp(token, ";")) break;
+			if (!strcmp(token, "<")) break;
 			if (!strcmp(token, "&&")) {
 				result[len-1] = NULL;
 				print_arr(result);
 				int returnVal = executeCommand(result);
 				free(result);
-				return returnVal;
+				// return returnVal;
 			}
 			if (!strcmp(token, "||")) {
 				result[len-1] = NULL;
 				print_arr(result);
 				int returnVal = executeCommand(result);
 				free(result);
-				return !returnVal;
+				// return !returnVal;
 			}
 			
 			result[len-1] = token;
@@ -100,7 +82,31 @@ int parse_command(char **str) {
 	}
 	result[len-1] = NULL;
 	//execute
-	executeCommand(result);
-	free(result);
-	return 0;
+	// executeCommand(result);
+	// free(result);
+	// return 0;
+	return result;
+}
+
+void parser_read() {
+  // must be set to NULL and 0 to have getline allocate a string
+  char *line = NULL;
+  unsigned long len = 0;
+  // stops at the first space:
+//   scanf("%ms", &line);
+   getline(&line, &len, stdin);
+//	readline(&line, &len);
+  
+  char *linepointer = line;
+  
+  int shouldStop = 0;
+//   while (!shouldStop && linepointer != NULL) {
+//   	shouldStop = parse_command(&linepointer);
+//   }
+  char ** tokens = tokenize(&line);
+  
+//   executeCommand(tokens);
+  
+  free(tokens);
+  free(line);
 }

@@ -11,8 +11,10 @@ int main() {
   printf("Good News Everyone\n");
 
   while (1) {
-  	if (isatty(fileno(stdin)))
+  	if (isatty(fileno(stdin))) {
     	printf("\e[93mKEY$\e[0m ");
+      fflush(stdout);
+    }
     parser_read();
   }
   
