@@ -8,14 +8,25 @@
 
 #include "exec.h"
 
-// returns pid of process, 0 if none started (`cd` or `exit`)
-// if none started, `*exitcode` is set to 
-int startCommand(char **command, int *exitcode) {
+// returns pid of child
+int startdummychild(int exitcode) {
+    int childpid;
+    if (childpid = fork()) {
+        // PARENT
+        return childpid;
+    }
+    // CHILD
+    exit(exitcode);
+}
+
+
+// returns pid of child
+int startCommand(char **command) {
     if (!command[0]) return 0;
     if (!strcmp(command[0], "exit")) {
         if (command[2]) {
             printf("KEYS: exit: too many arguments\n");
-            return -1;
+            return startdummychild(-1);
         }
         int exitval = 0;
         if (command[1]) {
@@ -26,14 +37,14 @@ int startCommand(char **command, int *exitcode) {
     if (!strcmp(command[0], "cd")) {
         if (command[1] && command[2]) {
             printf("KEYS: cd: too many arguments\n");
-            return -1;
+            return startdummychild(-1);
         }
         if (!command[1]) command[1] = getenv("HOME");
         if (chdir(command[1])) {
             printf("KEYS: cd: %s: %m\n", command[1]);
-            return -1;
+            return startdummychild(-1);
         }
-        return 0;
+        return startdummychild(0);
     }
     
     int childpid;
@@ -52,8 +63,10 @@ int startCommand(char **command, int *exitcode) {
     }
 }
 
-int waitforcommand() {
-    
+int waitfor(int pid) {
+    int wstatus;
+    waitpid(pid, &wstatus, 0);
+    return WEXITSTATUS(wstatus);
 }
 
 int executeCommand(char **command) {
@@ -88,7 +101,7 @@ int executeCommand(char **command) {
         // PARENT
         int wstatus;
         wait(&wstatus);
-        printf("\e[91mDEBUG:\e[0m wstatus: %x\n", wstatus);
+        // printf("\e[91mDEBUG:\e[0m wstatus: %x\n", wstatus);
         return WEXITSTATUS(wstatus);
     } else {
         // CHILD

@@ -1,23 +1,27 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 
-#include "parser.h"
-#include "exec.h"
-
-#include "parser.h"
-#include "exec.h"
+#include "input.h"
+#include "ast.h"
 
 int main() {
-  printf("Good News Everyone\n");
 
   while (1) {
   	if (isatty(fileno(stdin))) {
     	printf("\e[93mKEY$\e[0m ");
       fflush(stdout);
     }
-    parser_read();
+    char *input = doread();
+    if (!input) break;
+    printf("\n");
+    struct astnode *tree = parsetree(input);
+    // println_astnode(tree); // for debugging
+    evalnode(tree);
+    free_tree(tree);
+    free(input);
   }
-  
+  // testing stuff
   // execVarargs(2, "cd", "..");
   // execVarargs(2, "ls", "-l");
   // execVarargs(2, "echo", "Hello World!");
