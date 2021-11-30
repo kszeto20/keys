@@ -14,11 +14,10 @@ KEY$ ls -al>>test.txt    &&cat<test.txt
 You can also use left, right, backspace, and delete to your heart's content to edit your commands as you type them.  
 The shell is also careful to not display a prompt or mess with your terminal's settings if started without a terminal, and will exit properly after executing all commands if input ends with EOF.
 ## Known Issues / Missing Features
-I implemented `&&` and `||` in such a way that `a && b || c` gets parsed as `a && (b || c)` instead of `(a && b) || c` by accident, causing some useful bash idioms to be impossible. This was not fixed due to time constraints.  
 Due to originally planning to support them, parentheses and quotation marks do not work as expected. Do not use them - they may cause segmentation faults. This was not fixed due to time constraints.  
 Lines of input cannot be longer than 1024 characters. Typing more than this will cause a segmentation fault. This was not fixed due to time constraints.  
-A lot of work was put into implementing history (pressing up & down to choose previous commands). However, it was not completed due to time constraints.
-We wanted a more useful prompt than just `KEY$` (showing username, current working directory, etc). This was not done due to time constraints.
+A lot of work was put into implementing history (pressing up & down to choose previous commands). However, it was not completed due to time constraints.  
+We wanted a more useful prompt than just `KEY$` (showing username, current working directory, etc). This was not done due to time constraints.  
 Inputting a tab character (or any other non-1-width character) to the input messes up the input display. This was not fixed due to time constraints.
 ## Functions
 Due to time constraints, I will only be listing ones present in `.h` files (as all others are only helpers to these functions).
