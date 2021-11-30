@@ -32,47 +32,50 @@ void disableinputmode() {
 }
 */
 
-char * getHistFile() {
-	char * toRet = malloc (256 * sizeof(char));
-	strcpy(toRet, getenv("HOME"));
-	strcat(toRet, "/command_history");
-	return toRet;
+
+char * getHistFile() {																	// gets path of home + command file
+	//printf("Getting History File Path\n");
+	char * toRet = malloc (256 * sizeof(char));						// malloc char[] of path size + extra space + assign to pointer
+	strcpy(toRet, getenv("HOME"));												// copy home path into toRet
+	strcat(toRet, "/command_history.txt");								// concat command_history.txt to end of path
+	//printf("Finished Getting History File Path\n");
+	return toRet;																					// return
 }
 
-char * open_and_read () {
-	char * file = getHistFile();
+char * open_and_read () {																		// open the file, store all pre-existing data into char[], return char pointer
+	char * file = getHistFile();															// get file path
 	//printf("THE FILE NAME IS : %s\n", file);
-	int in = open(file, O_RDONLY);
+	int in = open(file, O_RDWR);															// open the file
 	//int in = creat(file, mainMode);
 	if (errno != 0) {
     printf("An error has occured \n%s", strerror(errno));
     return NULL;
   }
-	struct stat fileS;
+	struct stat fileS;																				// get stat struct
 	stat(file, &fileS);
-	int fileSize = fileS.st_size;
+	int fileSize = fileS.st_size;															// get file size
 
-	char * all = malloc(fileSize + 1);
-	read(in, all, fileSize);
+	char * all = malloc(fileSize + 1);												// malloc file sized char[]
+	read(in, all, fileSize);																	// transfer all info from file to all
 	//printf("THIS IT THE STRING%s\n", all);
 	close(in);
 	free(file);
-	return all;
+	return all;																								// reutrn pointer to char[] with pre-existing commands
 }
 
-void write_in (char * toWrite) {
-	char * histFile = getHistFile();
+void write_in (char * toWrite) {						// overwrite file with new command, \n, then all old commands
+	char * histFile = getHistFile();					// get path
 	//printf("Opening\n");
 	//int out = open(histFile, O_RDWR);
 	//printf("Opened\n");
-	char * orig = open_and_read();
-	int out = creat(histFile, mainMode);
+	char * orig = open_and_read();						// store pre-existing commands
+	int out = open(histFile, O_RDWR);					// open file anew
 	//printf("Start reading\n");
 	//char * orig = open_and_read();
 	//printf("Finished reading\n");
-	write(out, toWrite, strlen(toWrite));
-	write(out, "\n", 1);
-	write(out, orig, strlen(orig));
+	write(out, toWrite, strlen(toWrite));			// store the "new command first"
+	write(out, "\n", 1);											// add a "\n"
+	write(out, orig, strlen(orig));						// concat the previous commands to the end
 	free(histFile);
 	free(orig);
 	close(out);
@@ -138,17 +141,16 @@ void parser_read() {
 //   scanf("%ms", &line);
    getline(&line, &len, stdin);
 //	readline(&line, &len);
-  
+	write_in(line);
   char *linepointer = line;
-  
+
   int shouldStop = 0;
 //   while (!shouldStop && linepointer != NULL) {
 //   	shouldStop = parse_command(&linepointer);
 //   }
   char ** tokens = tokenize(&line);
-  
   executeCommand(tokens);
-  
+
   free(tokens);
   free(line);
 }
