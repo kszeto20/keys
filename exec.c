@@ -57,6 +57,7 @@ int waitforcommand() {
 }
 
 int executeCommand(char **command) {
+
     if (!command[0]) return 0;
     if (!strcmp(command[0], "exit")) {
         if (command[2]) {
@@ -81,7 +82,7 @@ int executeCommand(char **command) {
         }
         return 0;
     }
-    
+
     int childpid;
     if (childpid = fork()) {
         // PARENT
@@ -95,6 +96,7 @@ int executeCommand(char **command) {
         printf("%s: command not found\n", command[0]);
         exit(-1);
     }
+
 }
 
 // void executeTokens(char **tokens) {
@@ -107,20 +109,20 @@ int executeCommand(char **command) {
 
 int execVarargs(int n, ...) {
     char **args = malloc(n * sizeof(char *));
-    
+
     va_list varargs;
     va_start(varargs, n);
-    
+
     int i;
     for (i = 0; i < n; i++) {
         args[i] = va_arg(varargs, char *);
     }
-    
+
     va_end(varargs);
-    
+
     int exitcode = executeCommand(args);
-    
+
     free(args);
-    
+
     return exitcode;
 }
