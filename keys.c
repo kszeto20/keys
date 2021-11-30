@@ -13,7 +13,9 @@ mode_t mainMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 int main() {
 
   char * homePath = getHistFile();
-  int fd = creat(homePath, mainMode);
+  // int fd = creat(homePath, mainMode);
+  int fd = open(homePath, O_CREAT, 0666);
+  close(fd);
 
 
   while (1) {

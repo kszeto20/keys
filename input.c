@@ -118,7 +118,9 @@ char *doread() {
     int upTo = 0;
     char * fullHistory = open_and_read();
     char * fHPointer = fullHistory;
+    //printf("%s\n", fHPointer);
     while (strsep(&fHPointer, "\n"));
+    fHPointer = fullHistory;
 
     if (finished) return NULL;
   	if (isatty(fileno(stdin)))
@@ -137,25 +139,51 @@ char *doread() {
                 switch (c) {
       	        	case 'A': // UP
                     // upHandler(fullHistory, upTo);
-                    if (upTo != 0) {
-                      fHPointer += strlen(fHPointer) + 1;
-                    }
                     if (fHPointer[0] != 0) {
+                      if (upTo != 0) {
+                        fHPointer += strlen(fHPointer) + 1;
+                      }
+                      // wipes over current input with spaces
+                      if (cursor > buffer)
+                        printf("\e[%luD", cursor - buffer);
+                      int i;
+                      for (i = 0; buffer[i]; i++) printf(" ");
+                      if (i > 0) printf("\e[%dD", i);
+
                       strcpy(buffer, fHPointer);
                       cursor = buffer + strlen(buffer);
+                      printf("%s", buffer);
                       upTo++;
                     }
                     break;
       	          case 'B': // DOWN
+                    // printf("\nupTo: %d\n", upTo);
       	            if (upTo == 1) {
+                      // wipes over current input with spaces
+                      if (cursor > buffer)
+                        printf("\e[%luD", cursor - buffer);
+                      int i;
+                      for (i = 0; buffer[i]; i++) printf(" ");
+                      if (i > 0) printf("\e[%dD", i);
+
                       strcpy(buffer, "");
                       cursor = buffer;
                       upTo--;
                     } else if (upTo > 1) {
+                      // wipes over current input with spaces
+                      if (cursor > buffer)
+                        printf("\e[%luD", cursor - buffer);
+                      int i;
+                      for (i = 0; buffer[i]; i++) printf(" ");
+                      if (i > 0) printf("\e[%dD", i);
+
                       fHPointer -= 2;
                       while (fHPointer[0] != 0) fHPointer--;
+                      fHPointer++;
+
                       strcpy(buffer, fHPointer);
                       cursor = buffer + strlen(buffer);
+                      printf("%s", buffer);
                       upTo--;
                     }
       	            break;
