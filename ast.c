@@ -316,10 +316,6 @@ char * findtoplevel(char *haystack, char *needle) {
     return NULL;
 }
 
-char *stmt_conj_connectors[] = {";","&&","||","|",NULL};
-
-char *redirection_connectors[] = {">>",">","<",NULL};
-
 // returns the needle matched, NULL if none found
 // if one is found, `*loc` is set to its location
 // priority is in order of location in haystack, then by order in `needles`
@@ -471,11 +467,13 @@ struct astnode * parsetree(char *str) {
     // trystripparens(str); // broken
     struct astnode *result = malloc(sizeof(struct astnode));
     // try parsing as stmt_conj
-    char *conat;
-    char *matched;
+    char *conat = NULL;
+    char *matched = NULL;
     // semicolon takes priority
     if (!((conat = findtoplevel(str, ";")) && (matched = ";")))
-        matched = findlasttoplevel(str, stmt_conj_connectors, &conat);
+        matched = findlasttoplevel(str, (char*[]){"&&", "||", NULL}, &conat);
+    // piping has lower priority
+    if (!matched && (conat = findtoplevel(str, "|"))) matched = "|";
     if (matched) {
         result->kind = stmt_conj;
         // replace connector with 0's
@@ -488,7 +486,7 @@ struct astnode * parsetree(char *str) {
         result->data.stmt_conj_data.statements[1] = parsetree(conat+len);
         return result;
     }
-    matched = findlasttoplevel(str, redirection_connectors, &conat);
+    matched = findlasttoplevel(str, (char*[]){">>",">","<",NULL}, &conat);
     if (matched) {
         result->kind = redirection;
         // replace connector with 0's
