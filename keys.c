@@ -1,13 +1,19 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "input.h"
 #include "ast.h"
+#include "input.h"
 
 mode_t mainMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
 int main() {
+
+  char * homePath = getHistFile();
+  int fd = creat(homePath, mainMode);
 
 
   while (1) {
@@ -17,6 +23,7 @@ int main() {
     }
     char *input = doread();
     if (!input) break;
+    if (*input) write_in(input);
     printf("\n");
     struct astnode *tree = parsetree(input);
     println_astnode(tree); // for debugging

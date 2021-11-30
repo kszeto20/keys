@@ -56,14 +56,12 @@ void delchar(char *str) {
     }
 }
 
-static char * upHandler(char * source, int yesOrNom, int uptoRow) {
-  if (yesOrNo) {
-    int i;
-    char * delim = "\n";
-    char * oldCommand = NULL;
-    for (i = 0; i < upToRow; i++) {
-      oldCommand = strsep(source, delim);
-    }
+static char * upHandler(char * source, int uptoRow) {
+  int i;
+  //char * delim = "\n";
+  char * oldCommand = str;
+  for (i = 0; i < upToRow; i++) {
+    oldCommand = strchr(source, '\n') + 1;
   }
   return oldCommand;
 }
@@ -71,6 +69,10 @@ static char * upHandler(char * source, int yesOrNom, int uptoRow) {
 void doread() {
   int upTo = 0;
   char * fullHistory = open_and_read();
+  char * fHPointer = fullHistory;
+  while (strsep(&fHPointer, "\n")) {
+  }
+
 
 
   enableinputmode();
@@ -87,9 +89,28 @@ void doread() {
 	      	c = getchar();
 	        switch (c) {
 	        	case 'A': // UP
-
+              // upHandler(fullHistory, upTo);
+              if (upTo != 0) {
+                fHPointer += strlen(fHPointer) + 1;
+              }
+              if (fHPointer[0] != 0) {
+                strcpy(buffer, fHPointer);
+                cursor = buffer + strlen(buffer);
+                upTo++;
+              }
+              break;
 	          case 'B': // DOWN
-	            printf("\nkirsten implement history stuff\n");
+	            if (upTo == 1) {
+                strcpy(buffer, "");
+                cursor = buffer;
+                upTo--;
+              } else if (upTo > 1) {
+                fHPointer -= 2;
+                while (fHPointer[0] != 0) fHPointer--;
+                strcpy(buffer, fHPointer);
+                cursor = buffer + strlen(buffer);
+                upTo--;
+              }
 	            break;
 	          case 'C': // RIGHT
 	            if (*cursor) { // don't move right if at terminating 0

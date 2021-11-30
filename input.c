@@ -1,4 +1,8 @@
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
 #include <termios.h>
@@ -52,13 +56,74 @@ void delchar(char *str) {
     }
 }
 
+
+char * getHistFile() {                                   // gets path of home + command file
+	//printf("Getting History File Path\n");
+	char * toRet = malloc (256 * sizeof(char));           // malloc char[] of path size + extra space + assign to pointer
+	strcpy(toRet, getenv("HOME"));                        // copy home path into toRet
+	strcat(toRet, "/command_history.txt");                // concat command_history.txt to end of path
+	//printf("Finished Getting History File Path\n");
+	return toRet;
+}
+
+char * open_and_read () {                               // open the file, store all pre-existing data into char[], return char pointer
+	char * file = getHistFile();                          // get file path
+	//printf("THE FILE NAME IS : %s\n", file);
+	int in = open(file, O_RDWR);                          // open the file
+	//int in = creat(file, mainMode);
+	if (errno != 0) {
+    printf("An error has occured \n%s", strerror(errno));
+    return NULL;
+  }
+	struct stat fileS;                                    // get stat struct
+	stat(file, &fileS);
+	int fileSize = fileS.st_size;                         // get file size
+
+	char * all = malloc(fileSize + 1);                    // malloc file sized char[]
+	read(in, all, fileSize);                              // transfer all info from file to all
+	//printf("THIS IT THE STRING%s\n", all);
+	close(in);
+	free(file);
+	return all;
+}
+
+void write_in (char * toWrite) {            // overwrite file with new command, \n, then all old commands
+	char * histFile = getHistFile();          // get path
+	//printf("Opening\n");
+	//int out = open(histFile, O_RDWR);
+	//printf("Opened\n");
+	char * orig = open_and_read();            // store pre-existing commands
+	int out = open(histFile, O_RDWR);         // open file anew
+	//printf("Start reading\n");
+	//char * orig = open_and_read();
+	//printf("Finished reading\n");
+	write(out, toWrite, strlen(toWrite));     // store the "new command first"
+	write(out, "\n", 1);                      // add a "\n"
+	write(out, orig, strlen(orig));           // concat the previous commands to the end
+	free(histFile);
+	free(orig);
+	close(out);
+}
+
+void print_arr(char **arr) {
+	int i;
+	for (i = 0; arr[i]; i++) {
+		printf("%d: \"%s\"\n", i, arr[i]);
+	}
+}
+
 int finished = 0;
 
 char *doread() {
+    int upTo = 0;
+    char * fullHistory = open_and_read();
+    char * fHPointer = fullHistory;
+    while (strsep(&fHPointer, "\n"));
+
     if (finished) return NULL;
   	if (isatty(fileno(stdin)))
         enableinputmode();
-    
+
     char *buffer = malloc(1024 * sizeof(char));
     char *cursor = buffer;
     *cursor = 0;
@@ -70,10 +135,30 @@ char *doread() {
             if ((c = getchar()) == '[') {
                 c = getchar();
                 switch (c) {
-                case 'A': // UP
-                case 'B': // DOWN
-                    // printf("\nkirsten implement history stuff\n");
+      	        	case 'A': // UP
+                    // upHandler(fullHistory, upTo);
+                    if (upTo != 0) {
+                      fHPointer += strlen(fHPointer) + 1;
+                    }
+                    if (fHPointer[0] != 0) {
+                      strcpy(buffer, fHPointer);
+                      cursor = buffer + strlen(buffer);
+                      upTo++;
+                    }
                     break;
+      	          case 'B': // DOWN
+      	            if (upTo == 1) {
+                      strcpy(buffer, "");
+                      cursor = buffer;
+                      upTo--;
+                    } else if (upTo > 1) {
+                      fHPointer -= 2;
+                      while (fHPointer[0] != 0) fHPointer--;
+                      strcpy(buffer, fHPointer);
+                      cursor = buffer + strlen(buffer);
+                      upTo--;
+                    }
+      	            break;
                 case 'C': // RIGHT
                     if (*cursor) { // don't move right if at terminating 0
                         cursor++;
@@ -129,7 +214,7 @@ char *doread() {
     }
     exitloop:
     // printf("\nREAD LINE: \"%s\"\n", buffer);
-    
+
   	if (isatty(fileno(stdin)))
         disableinputmode();
     return buffer;
