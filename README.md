@@ -7,6 +7,10 @@ KEY$ cd nonexistentdir || echo Failure!
 KEY$ cd .; ls -a -l >> test.txt && echo "ls complete!" && cat < test.txt; rm test.txt || exit 1
 ```
 This works by parsing input as a tree (I believe the correct term is AST - Abstract Syntax Tree).  
+Lack or excess of whitespace is not a problem; this works too!
+```
+KEY$ ls -al>>test.txt    &&cat<test.txt
+```
 You can also use left, right, backspace, and delete to your heart's content to edit your commands as you type them.  
 The shell is also careful to not display a prompt or mess with your terminal's settings if started without a terminal, and will exit properly after executing all commands if input ends with EOF.
 ## Known Issues / Missing Features
