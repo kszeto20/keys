@@ -12,9 +12,14 @@
 #include <dirent.h>
 #include <sys/wait.h>
 
-void enableinputmode();
 
+void enableinputmode();
 void disableinputmode();
+
+void insertchar(char *str, char c);
+void delchar(char *str);
+
+char * doread();
 
 void parser_read();
 

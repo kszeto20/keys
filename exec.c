@@ -46,7 +46,7 @@ int startCommand(char **command) {
         }
         return startdummychild(0);
     }
-    
+
     int childpid;
     if (childpid = fork()) {
         // PARENT
@@ -73,10 +73,12 @@ int executeCommand(char **command) {
 
     if (!command[0]) return 0;
     if (!strcmp(command[0], "exit")) {
+      /*
         if (command[2]) {
             printf("KEYS: exit: too many arguments\n");
             return -1;
         }
+      */
         int exitval = 0;
         if (command[1]) {
             exitval = atoi(command[1]);
@@ -113,10 +115,10 @@ int executeCommand(char **command) {
 }
 
 // void executeTokens(char **tokens) {
-//     char **tokensToRun = 
+//     char **tokensToRun =
 //     int i;
 //     for (i = 0; tokens[i]; i++) {
-        
+
 //     }
 // }
 

@@ -5,7 +5,10 @@
 #include "input.h"
 #include "ast.h"
 
+mode_t mainMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+
 int main() {
+
 
   while (1) {
   	if (isatty(fileno(stdin))) {
@@ -28,4 +31,3 @@ int main() {
   // execVarargs(1, "exit");
   // execVarargs(3, "echo", "Goodbye", "World!");
 }
-
