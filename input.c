@@ -61,7 +61,7 @@ char * getHistFile() {                                   // gets path of home + 
 	//printf("Getting History File Path\n");
 	char * toRet = malloc (256 * sizeof(char));           // malloc char[] of path size + extra space + assign to pointer
 	strcpy(toRet, getenv("HOME"));                        // copy home path into toRet
-	strcat(toRet, "/command_history.txt");                // concat command_history.txt to end of path
+	strcat(toRet, "/.keys_history");                      // concat .keys_history to end of path
 	//printf("Finished Getting History File Path\n");
 	return toRet;
 }
@@ -71,10 +71,10 @@ char * open_and_read () {                               // open the file, store 
 	//printf("THE FILE NAME IS : %s\n", file);
 	int in = open(file, O_RDWR);                          // open the file
 	//int in = creat(file, mainMode);
-	if (errno != 0) {
-    printf("An error has occured \n%s", strerror(errno));
-    return NULL;
-  }
+	if (in == -1) {
+        printf("An error has occured \n%s\n", strerror(errno));
+        return NULL;
+    }
 	struct stat fileS;                                    // get stat struct
 	stat(file, &fileS);
 	int fileSize = fileS.st_size;                         // get file size
@@ -112,6 +112,37 @@ void print_arr(char **arr) {
 	}
 }
 
+void displayprompt() {
+    char *home = getenv("HOME");
+    int cwdcap = 16;
+    char *cwd = NULL;
+    char *ret;
+    do {
+        cwdcap *= 2;
+        free(cwd);
+        cwd = malloc(cwdcap * sizeof(char));
+        ret = getcwd(cwd, cwdcap-1);
+    } while (ret == NULL && errno == ERANGE);
+    if (ret == NULL) {
+        printf("KEYS: errno %d: %s\n", errno, strerror(errno));
+    }
+    
+    // set bold, blue
+    printf("\e[1m\e[34m");
+    
+    int homelen = strlen(home);
+    // if `cwd` starts with `home`
+    if (!strncmp(home, cwd, homelen)) {
+        printf("~%s", cwd + homelen);
+    } else {
+        printf("%s", cwd);
+    }
+    // 
+    printf("\e[0m:\e[93mKEY$\e[0m ");
+    fflush(stdout);
+    free(cwd);
+}
+
 int finished = 0;
 
 char *doread() {
@@ -123,8 +154,10 @@ char *doread() {
     fHPointer = fullHistory;
 
     if (finished) return NULL;
-  	if (isatty(fileno(stdin)))
+  	if (isatty(fileno(stdin))) {
+        displayprompt();
         enableinputmode();
+    }
 
     char *buffer = malloc(1024 * sizeof(char));
     char *cursor = buffer;
@@ -146,9 +179,7 @@ char *doread() {
                       // wipes over current input with spaces
                       if (cursor > buffer)
                         printf("\e[%luD", cursor - buffer);
-                      int i;
-                      for (i = 0; buffer[i]; i++) printf(" ");
-                      if (i > 0) printf("\e[%dD", i);
+                      printf("\e[K");
 
                       strcpy(buffer, fHPointer);
                       cursor = buffer + strlen(buffer);
@@ -162,10 +193,8 @@ char *doread() {
                       // wipes over current input with spaces
                       if (cursor > buffer)
                         printf("\e[%luD", cursor - buffer);
-                      int i;
-                      for (i = 0; buffer[i]; i++) printf(" ");
-                      if (i > 0) printf("\e[%dD", i);
-
+                      printf("\e[K");
+                      
                       strcpy(buffer, "");
                       cursor = buffer;
                       upTo--;
@@ -173,9 +202,7 @@ char *doread() {
                       // wipes over current input with spaces
                       if (cursor > buffer)
                         printf("\e[%luD", cursor - buffer);
-                      int i;
-                      for (i = 0; buffer[i]; i++) printf(" ");
-                      if (i > 0) printf("\e[%dD", i);
+                      printf("\e[K");
 
                       fHPointer -= 2;
                       while (fHPointer[0] != 0) fHPointer--;

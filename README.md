@@ -16,8 +16,12 @@ The shell is also careful to not display a prompt or mess with your terminal's s
 ## Known Issues / Missing Features
 Due to originally planning to support them, parentheses and quotation marks do not work as expected. Do not use them - they may cause segmentation faults. This was not fixed due to time constraints.  
 Lines of input cannot be longer than 1024 characters. Typing more than this will cause a segmentation fault. This was not fixed due to time constraints.  
-We wanted a more useful prompt than just `KEY$` (showing username, current working directory, etc). This was not done due to time constraints.  
-Inputting a tab character (or any other non-1-width character) to the input messes up the input display. This was not fixed due to time constraints.
+Notable issue: if the program unexpectedly stops for any reason (e.g. SEGFAULT, possibly when killed externally) there is a good chance it could mess up your terminal (typed characters won't show). This was not fixed due to time constraints, and because we don't know of a clean way to fix it. The `man` command seems to do something similar as well (ruins scrolling functionality upon SSH disconnection) so I think (and hope) we're excused in this case.  
+Inputting a tab character (or any other non-1-width character) to the input messes up the input display. This was not fixed due to time constraints.  
+
+We wanted to implement (but couldn't due to time constraints):
+- parentheses, quotation marks, and backslashes being parsed properly
+- all `~`'s being replaced with the user's home directory
 ## Functions
 Due to time constraints, I will only be listing ones present in `.h` files (as all others are only helpers to these functions).
 ### `keys.c`

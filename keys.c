@@ -10,24 +10,21 @@
 mode_t mainMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
 int main() {
-
-  char * homePath = getHistFile();
+  
+  // creates history file
+  char * histfile = getHistFile();
   // int fd = creat(homePath, mainMode);
-  int fd = open(homePath, O_CREAT, 0666);
+  int fd = open(histfile, O_CREAT, 0666);
   close(fd);
 
 
   while (1) {
-  	if (isatty(fileno(stdin))) {
-    	printf("\e[93mKEY$\e[0m ");
-      fflush(stdout);
-    }
     char *input = doread();
     if (!input) break;
     if (*input) write_in(input);
     printf("\n");
     struct astnode *tree = parsetree(input);
-    println_astnode(tree); // for debugging
+    // println_astnode(tree); // for debugging
     evalnode(tree);
     free_tree(tree);
     free(input);
