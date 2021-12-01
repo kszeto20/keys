@@ -100,8 +100,54 @@ void trystripparens(char *str) {
     }
 }
 
+// returns the needle matched, NULL if none found
+// if one is found, `*loc` is set to its location
+// priority is in order of location in haystack, then by order in `needles`
+char * findfirsttoplevel(char *str, char **needles, char **loc) {
+    // int numneedles;
+    // for (numneedles = 0; needles[numneedles]; numneedles++);
+    int level = 0;
+    int i;
+    for (i = 0; str[i]; i++) {
+        switch (str[i]) {
+        case '(':
+            level++;
+            break;
+        case ')':
+            level--;
+            break;
+        case '"':
+            // moves i to next quote character not after a backslash:
+            while (str[++i] != '"') {
+                // intentional behavior: the input `"\\"` (quote, BS, BS, quote) should stop on the second quote
+                while (str[i] == '\\') i++;
+            }
+            break;
+        case '\\':
+            i++;
+            break;
+        default:
+            // must be at top level (level == 0) to match
+            if (!level) {
+                // printf("%s\n", str + i);
+                int j;
+                for (j = 0; needles[j]; j++) {
+                    char *needle = needles[j];
+                    if (!strncmp(str+i, needle, strlen(needle))) {
+                        *loc = str + i;
+                        return needle;
+                    }
+                }
+            }
+        }
+    }
+    return NULL;
+}
 #endif
 
+/* Prints a node in a user-friendly way. Should not fail for any *valid* AST nodes.
+ * Does not return anything: it prints directly to stdout.
+ */
 void print_astnode(struct astnode *node) {
     if (!node) {
         printf("NULL");
@@ -140,7 +186,17 @@ void print_astnode(struct astnode *node) {
     }
 }
 
-// frees a whole tree, including its children and any parts in heap memory
+/* Equivalent to `print_astnode(node); printf("\n");`.
+ * Works as a convenience function.
+ */
+void println_astnode(struct astnode *node) {
+    print_astnode(node);
+    printf("\n");
+}
+
+/* Frees a whole tree, including its children and any parts in heap memory.
+ * Does not return anything.
+ */
 void free_tree(struct astnode *node) {
     if (!node) return;
     
@@ -160,17 +216,21 @@ void free_tree(struct astnode *node) {
     free(node);
 }
 
-void println_astnode(struct astnode *node) {
-    print_astnode(node);
-    printf("\n");
-}
-
+/* These functions are used in a functional programming sort of way.
+ * They each take one int and return an int, in ways that are self-explanatory.
+ * This is used for `;`, `&&`, and `||` to determine whether to continue after the first command finishes.
+ */
 int ret_zero(int x) { return 0; }
 int ret_same(int x) { return x; }
 int ret_not(int x) { return !x; }
 
+/* A typedef for convenience, to store a pointer to one of the above functions.
+ */
 typedef int (*unary_int_func)(int);
 
+/* Recursively evaluates an AST node. Should exit with `-1` on failure for any reason.
+ * Otherwise, its return value its exit status, which is derived from the exit status of the child processes started.
+ */
 int evalnode(struct astnode *node) {
     if (!node) {
         printf("CANNOT EXECUTE NULL NODE\n");
@@ -257,55 +317,62 @@ int evalnode(struct astnode *node) {
     return result;
 }
 
-// returns 0 if unbalanced, anything else otherwise
+/* CURRENTLY BROKEN. WILL ALWAYS RETURN !0.
+ * This function *should* return !0 if the input string has balanced parentheses.
+ * This should also account for backslashes and quotation marks.
+ * If it is unbalanced, it should return 0.
+ */
 int balanced(char *str) {
     int level = 0;
-    int i;
-    for (i = 0; str[i]; i++) {
-        switch (str[i]) {
-        case '(':
-            level++;
-            break;
-        case ')':
-            level--;
-            if (level < 0) return -1;
-            break;
-        case '"':
-            // moves i to next quote character not after a backslash:
-            while (str[++i] != '"') {
-                while (str[i] == '\\') i++;
-            }
-            break;
-        }
-    }
+    // int i;
+    // for (i = 0; str[i]; i++) {
+    //     switch (str[i]) {
+    //     case '(':
+    //         level++;
+    //         break;
+    //     case ')':
+    //         level--;
+    //         if (level < 0) return -1;
+    //         break;
+    //     case '"':
+    //         // moves i to next quote character not after a backslash:
+    //         while (str[++i] != '"') {
+    //             while (str[i] == '\\') i++;
+    //         }
+    //         break;
+    //     }
+    // }
     // level == 0 -> balanced
     return !level;
 }
 
-// returns pointer to first top-level `needle`
-// returns NULL on failure
+/* This function returns a pointer to a location within `haystack`,
+ * at the start of which `needle` is found. It should also account for
+ * parentheses, quotation marks, and backslashes, but this has been disabled.
+ * If `needle` is not found in `haystack`, NULL is returned.
+ */
 char * findtoplevel(char *haystack, char *needle) {
     int needlelen = strlen(needle);
     int level = 0;
     int i;
     for (i = 0; haystack[i]; i++) {
         switch (haystack[i]) {
-        case '(':
-            level++;
-            break;
-        case ')':
-            level--;
-            break;
-        case '"':
-            // moves i to next quote character not after a backslash:
-            while (haystack[++i] != '"') {
-                // intentional behavior: the input `"\\"` (quote, BS, BS, quote) should stop on the second quote
-                while (haystack[i] == '\\') i++;
-            }
-            break;
-        case '\\':
-            i++;
-            break;
+        // case '(':
+        //     level++;
+        //     break;
+        // case ')':
+        //     level--;
+        //     break;
+        // case '"':
+        //     // moves i to next quote character not after a backslash:
+        //     while (haystack[++i] != '"') {
+        //         // intentional behavior: the input `"\\"` (quote, BS, BS, quote) should stop on the second quote
+        //         while (haystack[i] == '\\') i++;
+        //     }
+        //     break;
+        // case '\\':
+        //     i++;
+        //     break;
         default:
             // must be at top level (level == 0) to match
             if (!level && !strncmp(haystack + i, needle, needlelen)) {
@@ -316,54 +383,15 @@ char * findtoplevel(char *haystack, char *needle) {
     return NULL;
 }
 
-// returns the needle matched, NULL if none found
-// if one is found, `*loc` is set to its location
-// priority is in order of location in haystack, then by order in `needles`
-char * findfirsttoplevel(char *str, char **needles, char **loc) {
-    // int numneedles;
-    // for (numneedles = 0; needles[numneedles]; numneedles++);
-    int level = 0;
-    int i;
-    for (i = 0; str[i]; i++) {
-        switch (str[i]) {
-        case '(':
-            level++;
-            break;
-        case ')':
-            level--;
-            break;
-        case '"':
-            // moves i to next quote character not after a backslash:
-            while (str[++i] != '"') {
-                // intentional behavior: the input `"\\"` (quote, BS, BS, quote) should stop on the second quote
-                while (str[i] == '\\') i++;
-            }
-            break;
-        case '\\':
-            i++;
-            break;
-        default:
-            // must be at top level (level == 0) to match
-            if (!level) {
-                // printf("%s\n", str + i);
-                int j;
-                for (j = 0; needles[j]; j++) {
-                    char *needle = needles[j];
-                    if (!strncmp(str+i, needle, strlen(needle))) {
-                        *loc = str + i;
-                        return needle;
-                    }
-                }
-            }
-        }
-    }
-    return NULL;
-}
-
-// TODO: DOES NOT WORK
-// returns the needle matched, NULL if none found
-// if one is found, `*loc` is set to its location
-// priority is in reverse order of location in haystack by the end of the needle, then by order in `needles`
+/* This works in a similar way to `findtoplevel`, but works with multiple needles.
+ * However, the return value is not the location in `str`, but rather the needle matched (obtained directly from `needles`).
+ * The location where the needle was found is stored in `*loc` on success.
+ * On failure, NULL is returned and `loc` is left unchanged.
+ * The needle returned will be the one with its *last* character found furthest within `str`.
+ * In the case that two match with the same last character, the needle returned is the one that appears first in `needles`.
+ * (E.g. "a || b" with needles "||" and "|" should return "||" and set `*loc` to "|| b")
+ * Notable precondition: `needles` is expected to point to a null-terminated array of strings.
+ */
 char * findlasttoplevel(char *str, char **needles, char **loc) {
     // int numneedles;
     // for (numneedles = 0; needles[numneedles]; numneedles++);
@@ -406,7 +434,9 @@ char * findlasttoplevel(char *str, char **needles, char **loc) {
     return NULL;
 }
 
-// because Linux doesn't include this in string.h apparently??
+/* Reverses a null-terminated string in-place.
+ * Does not return anything: the characters of `str` are modified.
+ */
 void strrev(char *str) {
     int j = strlen(str)-1;
     int i;
@@ -417,7 +447,9 @@ void strrev(char *str) {
     }
 }
 
-// returns a whitespace-stripped dynamically-allocated copy of `str`
+/* Returns a whitespace-stripped dynamically-allocated copy of `str`
+ * `str` is left unchanged.
+ */
 char *strip(char *str) {
     // `strspn` gives the length at the beginning of `str`
     // `strrev` reverses a string
@@ -433,6 +465,11 @@ char *strip(char *str) {
     return result;
 }
 
+/* Returns a dynamically-allocated null-terminated array of strings,
+ * which are the tokens of `str` - as split by spaces and newlines -
+ * each of which will point to a location within `str`, which will be
+ * modified to replace whitespace with null characters.
+ */
 char **tokenize(char *str) {
 	int len = 1; // starts at 1 to ensure space for terminating null
 	int cap = 1;
@@ -456,8 +493,11 @@ char **tokenize(char *str) {
 	return result;
 }
 
-// parses str into a `astnode`
-// warning: `str` will be desecrated
+/* Parses `str` into a newly-allocated `astnode`, a pointer to which is returned.
+ * The characters of `str` will be changed to used by this tree.
+ * Changing or reading from `str` after this call is undefined behavior, and may modify the tree returned.
+ * The lifetime of `str` should exceed that of the tree returned.
+ */
 struct astnode * parsetree(char *str) {
     // printf("PARSING: \"%s\"\n", str);
     if (!balanced(str)) {
@@ -517,7 +557,7 @@ struct astnode * parsetree(char *str) {
     return result;
 }
 
-// for testing
+//// for testing
 // int main() {
 //     // print_arr(make_arr_NULL("cd", "..", NULL));
 //     char input[128] = "cd .; ls -a -l >> test.txt && echo ls complete! && cat < test.txt; rm test.txt; echo piping too!; ls | cat";
