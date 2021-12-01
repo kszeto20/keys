@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "input.h"
 #include "ast.h"
 #include "input.h"
 

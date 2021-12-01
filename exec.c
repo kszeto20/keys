@@ -24,12 +24,12 @@ int startdummychild(int exitcode) {
 int startCommand(char **command) {
     if (!command[0]) return 0;
     if (!strcmp(command[0], "exit")) {
-        if (command[2]) {
-            printf("KEYS: exit: too many arguments\n");
-            return startdummychild(-1);
-        }
         int exitval = 0;
         if (command[1]) {
+            if (command[2]) {
+                printf("KEYS: exit: too many arguments\n");
+                return startdummychild(-1);
+            }
             exitval = atoi(command[1]);
         }
         exit(exitval);
@@ -73,14 +73,12 @@ int executeCommand(char **command) {
 
     if (!command[0]) return 0;
     if (!strcmp(command[0], "exit")) {
-      /*
-        if (command[2]) {
-            printf("KEYS: exit: too many arguments\n");
-            return -1;
-        }
-      */
         int exitval = 0;
         if (command[1]) {
+            if (command[2]) {
+                printf("KEYS: exit: too many arguments\n");
+                return -1;
+            }
             exitval = atoi(command[1]);
         }
         exit(exitval);
