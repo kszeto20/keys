@@ -26,14 +26,14 @@ As little bonus features:
 - Similar to bash, `exit [exitcode]` can be used to exit the shell with a particular exitcode.
 - Although using `~` in a command isn't implemented, you can still use `cd` command (with no arguments) to go to your home directory.
 - The prompt shows your current directory, and appropriately shortens it when it's a subdirectory of your home directory.
-## Known Issues / Missing Features
+## Known Limtations & Issues / Missing Features
 Due to originally planning to support them, parentheses and quotation marks do not work as expected. Do not use them - they may cause segmentation faults. This was not fixed due to time constraints.  
-Lines of input cannot be longer than 1024 characters. Typing more than this will cause a segmentation fault. This was not fixed due to time constraints.  
+Lines of input cannot be longer than 2048 characters. Typing more than this will cause a segmentation fault. This was not fixed due to time constraints. (It would be a bit frustrating to make reallocation play nicely with selecting from history, and I personally don't think you should be typing 2 KB of text on one line anyway.)  
 Notable issue: if the program unexpectedly stops for any reason (e.g. SEGFAULT, possibly when killed externally) there is a good chance it could mess up your terminal (typed characters won't show). This was not fixed due to time constraints, and because we don't know of a clean way to fix it. The `man` command seems to do something similar as well (ruins scrolling functionality upon SSH disconnection) so I think (and hope) we're excused in this case.  
 Inputting any non-1-width character to the input messes up the input display. `TAB` is the only exclusion to this, as we explicitly excluded all tab characters from the input. This was not fixed due to time constraints.  
 Piping has one limitation: it can only be done from one raw command to another. This means you cannot pipe and redirect at the same time. We had ideas for how to fix this issue, which we did not get around to implementing due to time constraints. Thankfully, because we made `|` have a higher priority than `&&` and `||`, which in turn have a higher priority than `;`, so it should still work as expected with those conjunctions (e.g. `cd .. && ls | cat && echo success! || echo failed!; echo done!`);
 
-We wanted to implement (but couldn't due to time constraints):
+We also wanted to implement (but couldn't due to time constraints):
 - parentheses, quotation marks, and backslashes being parsed properly
 - all `~`'s being replaced with the user's home directory
 ## Functions

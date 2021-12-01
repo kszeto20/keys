@@ -159,7 +159,7 @@ char *doread() {
         enableinputmode();
     }
 
-    char *buffer = malloc(1024 * sizeof(char));
+    char *buffer = malloc(2048 * sizeof(char));
     char *cursor = buffer;
     *cursor = 0;
     int c;
