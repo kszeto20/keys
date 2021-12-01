@@ -166,6 +166,10 @@ char *doread() {
     while (1) {
         c = getchar();
         switch (c) {
+        // ignored:
+        case '\t':
+            break;
+        // escape sequences (handles arrow keys, ignores all else)
         case '\e':
             if ((c = getchar()) == '[') {
                 c = getchar();
@@ -248,16 +252,17 @@ char *doread() {
                 printf("\e[%luD", n);
             }
             break;
-        case -1:
+        case EOF:
             finished = 1;
         case '\n':
+            if (isatty(fileno(stdin))) printf("\n");
             goto exitloop; // ill get around to making this cleaner
         default:
             // printf("%c", c);
             insertchar(cursor, c);
-            if (isatty(fileno(stdout))) {
-                printf("%s", cursor);
-                cursor++;
+            cursor++;
+            if (isatty(fileno(stdin))) {
+                printf("%s", cursor - 1);
                 unsigned long n = strlen(cursor);
                 if (n) printf("\e[%luD", n);
             }

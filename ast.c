@@ -469,10 +469,10 @@ struct astnode * parsetree(char *str) {
     // try parsing as stmt_conj
     char *conat = NULL;
     char *matched = NULL;
-    // semicolon takes priority
+    // semicolon has lowest priority (i.e. `a && b; c || d` is `(a && b) ; (c || d)`)
     if (!((conat = findtoplevel(str, ";")) && (matched = ";")))
         matched = findlasttoplevel(str, (char*[]){"&&", "||", NULL}, &conat);
-    // piping has lower priority
+    // piping has highest priority
     if (!matched && (conat = findtoplevel(str, "|"))) matched = "|";
     if (matched) {
         result->kind = stmt_conj;

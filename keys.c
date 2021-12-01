@@ -22,7 +22,6 @@ int main() {
     char *input = doread();
     if (!input) break;
     if (*input) write_in(input);
-    printf("\n");
     struct astnode *tree = parsetree(input);
     // println_astnode(tree); // for debugging
     evalnode(tree);

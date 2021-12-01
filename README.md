@@ -4,20 +4,34 @@ Support for many of bash's basic features, including redirection, piping, combin
 ```
 KEY$ cd existentdir && echo Success!
 KEY$ cd nonexistentdir || echo Failure!
-KEY$ cd .; ls -a -l >> test.txt && echo "ls complete!" && cat < test.txt; rm test.txt || exit 1
+KEY$ cd mightexist && echo Success! || echo Failure!; echo Done either way!
+KEY$ cd ..; ls -a -l >> test.txt && echo ls complete! && cat < test.txt; rm test.txt || exit 1
 ```
-This works by parsing input as a tree (I believe the correct term is AST - Abstract Syntax Tree).  
+This works by parsing input as a tree (I believe the correct term is AST - Abstract Syntax Tree). This allows for the most flexibility when it comes to commands!  
 Lack or excess of whitespace is not a problem; this works too!
 ```
 KEY$ ls -al>>test.txt    &&cat<test.txt
 ```
 You can also use left, right, backspace, and delete to your heart's content to edit your commands as you type them.  
-The shell is also careful to not display a prompt or mess with your terminal's settings if started without a terminal, and will exit properly after executing all commands if input ends with EOF.
+In the case that the shell starts with input that is not a terminal (e.g. redirected input from file), the shell is also careful to:  
+- not display a prompt  
+- not mess with your terminal's settings  
+- exit properly after executing all commands if input ends with `EOF`  
+
+(Note: Issues may still occur if you have arrow key sequences, backspace, or delete in your redirected input. But who would do that?)
+
+We also implemented **history!** You can press the up and down arrow keys to go forwards and backwards through previous commands. Unlike bash, your original command is not stored, but similar to bash, your history is stored in a file, `~/.keys_history`, so that it persists between sessions.  
+
+As little bonus features:  
+- Similar to bash, `exit [exitcode]` can be used to exit the shell with a particular exitcode.
+- Although using `~` in a command isn't implemented, you can still use `cd` command (with no arguments) to go to your home directory.
+- The prompt shows your current directory, and appropriately shortens it when it's a subdirectory of your home directory.
 ## Known Issues / Missing Features
 Due to originally planning to support them, parentheses and quotation marks do not work as expected. Do not use them - they may cause segmentation faults. This was not fixed due to time constraints.  
 Lines of input cannot be longer than 1024 characters. Typing more than this will cause a segmentation fault. This was not fixed due to time constraints.  
 Notable issue: if the program unexpectedly stops for any reason (e.g. SEGFAULT, possibly when killed externally) there is a good chance it could mess up your terminal (typed characters won't show). This was not fixed due to time constraints, and because we don't know of a clean way to fix it. The `man` command seems to do something similar as well (ruins scrolling functionality upon SSH disconnection) so I think (and hope) we're excused in this case.  
-Inputting a tab character (or any other non-1-width character) to the input messes up the input display. This was not fixed due to time constraints.  
+Inputting any non-1-width character to the input messes up the input display. `TAB` is the only exclusion to this, as we explicitly excluded all tab characters from the input. This was not fixed due to time constraints.  
+Piping has one limitation: it can only be done from one raw command to another. This means you cannot pipe and redirect at the same time. We had ideas for how to fix this issue, which we did not get around to implementing due to time constraints. Thankfully, because we made `|` have a higher priority than `&&` and `||`, which in turn have a higher priority than `;`, so it should still work as expected with those conjunctions (e.g. `cd .. && ls | cat && echo success! || echo failed!; echo done!`);
 
 We wanted to implement (but couldn't due to time constraints):
 - parentheses, quotation marks, and backslashes being parsed properly
