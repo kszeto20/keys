@@ -5,6 +5,7 @@ Support for many of bash's basic features, including redirection, piping, combin
 KEY$ cd existentdir && echo Success!
 KEY$ cd nonexistentdir || echo Failure!
 KEY$ cd mightexist && echo Success! || echo Failure!; echo Done either way!
+KEY$ cat<original.txt>copy.txt
 KEY$ cd ..; ls -a -l >> test.txt && echo ls complete! && cat < test.txt; rm test.txt || exit 1
 ```
 This works by parsing input as a tree (I believe the correct term is AST - Abstract Syntax Tree). This allows for the most flexibility when it comes to commands!  
@@ -12,6 +13,14 @@ Lack or excess of whitespace is not a problem; this works too!
 ```
 KEY$ ls -al>>test.txt    &&cat<test.txt
 ```
+Note that the order of operations is equivalent (or at least very similar to) bash. In order of operator precedence, we support:
+- `|` - piping, from one command to another
+- `&&`, `||` - "and" and "or", to execute the next command only if the previous succeeds/fails respectively
+- `;` - executes the next command after the other, regardless of its exit status
+- `<`, `>`, `>>` - redirection to stdin / from stdout / from stdout with appending, respectively  
+
+Operators of the same precedence have left-to-right associativity (i.e. `a && b || c` -> `(a && b) || c` and `a || b && c` -> `(a || b) && c`). Although this applies for redirection as well, it has no noticeable effect. (Unless you redirect the same stream twice, but why would you do that?)
+
 You can also use left, right, backspace, and delete to your heart's content to edit your commands as you type them.  
 In the case that the shell starts with input that is not a terminal (e.g. redirected input from file), the shell is also careful to:  
 - not display a prompt  
@@ -36,6 +45,7 @@ Piping has one limitation: it can only be done from one raw command to another. 
 We also wanted to implement (but couldn't due to time constraints):
 - parentheses, quotation marks, and backslashes being parsed properly
 - all `~`'s being replaced with the user's home directory
+- using `<<` to redirect from a string of text to the stdin of a command (would work by writing the string to a temporary file, then redirecting as usual from that file)
 ## Functions
 Due to time constraints, I will only be listing ones present in `.h` files (as all others are only helpers to these functions).
 ### `keys.c`
