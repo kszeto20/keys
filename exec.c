@@ -69,6 +69,10 @@ int waitfor(int pid) {
     return WEXITSTATUS(wstatus);
 }
 
+/*
+excutes all the commands in the list of tokens
+returns WEXITSTATUS upon parent processing or exits the program upon child execution
+*/
 int executeCommand(char **command) {
 
     if (!command[0]) return 0;
@@ -112,14 +116,10 @@ int executeCommand(char **command) {
 
 }
 
-// void executeTokens(char **tokens) {
-//     char **tokensToRun =
-//     int i;
-//     for (i = 0; tokens[i]; i++) {
-
-//     }
-// }
-
+/*
+tokenizes varargs and calls executeCommand to execute commands
+returns executeComand return value upon completion
+*/
 int execVarargs(int n, ...) {
     char **args = malloc(n * sizeof(char *));
 

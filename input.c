@@ -10,6 +10,7 @@
 
 #include "input.h"
 
+// allows program to read stdin char by char
 void enableinputmode() {
     if (isatty(fileno(stdin))) {
         struct termios info;
@@ -24,6 +25,7 @@ void enableinputmode() {
     }
 }
 
+// returns program to read stdin line by line
 void disableinputmode() {
     if (isatty(fileno(stdin))) {
         struct termios info;
@@ -56,50 +58,50 @@ void delchar(char *str) {
     }
 }
 
-
-char * getHistFile() {                                   // gets path of home + command file
-	//printf("Getting History File Path\n");
-	char * toRet = malloc (256 * sizeof(char));           // malloc char[] of path size + extra space + assign to pointer
-	strcpy(toRet, getenv("HOME"));                        // copy home path into toRet
-	strcat(toRet, "/.keys_history");                      // concat .keys_history to end of path
-	//printf("Finished Getting History File Path\n");
+// returns a string of path to history file (userHomePath/.keys_history)
+char * getHistFile() {
+	char * toRet = malloc (256 * sizeof(char));
+	strcpy(toRet, getenv("HOME"));
+  strcat(toRet, "/.keys_history");
 	return toRet;
 }
 
-char * open_and_read () {                               // open the file, store all pre-existing data into char[], return char pointer
-	char * file = getHistFile();                          // get file path
-	//printf("THE FILE NAME IS : %s\n", file);
-	int in = open(file, O_RDWR);                          // open the file
-	//int in = creat(file, mainMode);
+// returns a string of all pre-existing content in the history file
+char * open_and_read () {
+	char * file = getHistFile();
+	int in = open(file, O_RDWR);
 	if (in == -1) {
         printf("An error has occured \n%s\n", strerror(errno));
         return NULL;
     }
-	struct stat fileS;                                    // get stat struct
-	stat(file, &fileS);
-	int fileSize = fileS.st_size;                         // get file size
 
-	char * all = malloc(fileSize + 1);                    // malloc file sized char[]
-	read(in, all, fileSize);                              // transfer all info from file to all
-	//printf("THIS IT THE STRING%s\n", all);
+	struct stat fileS;
+	stat(file, &fileS);
+	int fileSize = fileS.st_size;
+
+	char * all = malloc(fileSize + 1);
+	read(in, all, fileSize); // reading from in, to all, fileSize bytes
+
 	close(in);
 	free(file);
 	return all;
+
 }
 
-void write_in (char * toWrite) {            // overwrite file with new command, \n, then all old commands
-	char * histFile = getHistFile();          // get path
+// returns nothing; adds new command string to the history file
+void write_in (char * toWrite) {
+	char * histFile = getHistFile();
 	//printf("Opening\n");
 	//int out = open(histFile, O_RDWR);
 	//printf("Opened\n");
-	char * orig = open_and_read();            // store pre-existing commands
-	int out = open(histFile, O_RDWR);         // open file anew
+	char * orig = open_and_read();
+	int out = open(histFile, O_RDWR);
 	//printf("Start reading\n");
 	//char * orig = open_and_read();
 	//printf("Finished reading\n");
-	write(out, toWrite, strlen(toWrite));     // store the "new command first"
-	write(out, "\n", 1);                      // add a "\n"
-	write(out, orig, strlen(orig));           // concat the previous commands to the end
+	write(out, toWrite, strlen(toWrite));
+	write(out, "\n", 1);
+	write(out, orig, strlen(orig));
 	free(histFile);
 	free(orig);
 	close(out);
@@ -112,6 +114,7 @@ void print_arr(char **arr) {
 	}
 }
 
+// displays where the use is in their shell before "KEY$" command line prompt
 void displayprompt() {
     char *home = getenv("HOME");
     int cwdcap = 16;
@@ -126,10 +129,10 @@ void displayprompt() {
     if (ret == NULL) {
         printf("KEYS: errno %d: %s\n", errno, strerror(errno));
     }
-    
+
     // set bold, blue
     printf("\e[1m\e[34m");
-    
+
     int homelen = strlen(home);
     // if `cwd` starts with `home`
     if (!strncmp(home, cwd, homelen)) {
@@ -137,7 +140,7 @@ void displayprompt() {
     } else {
         printf("%s", cwd);
     }
-    // 
+    //
     printf("\e[0m:\e[93mKEY$\e[0m ");
     fflush(stdout);
     free(cwd);
@@ -145,139 +148,142 @@ void displayprompt() {
 
 int finished = 0;
 
-char *doread() {
-    int upTo = 0;
-    char * fullHistory = open_and_read();
-    char * fHPointer = fullHistory;
-    //printf("%s\n", fHPointer);
-    while (strsep(&fHPointer, "\n"));
-    fHPointer = fullHistory;
+/*
+takes command line input, parses input character by character by character
+accounts for arrow keys, backspace, and delete
+*/
 
-    if (finished) return NULL;
-  	if (isatty(fileno(stdin))) {
-        displayprompt();
-        enableinputmode();
-    }
+char * doread() {
+  int upTo = 0; // counter for how many lines up in the history log file the user is
+  char * fullHistory = open_and_read(); // gets the existing history for use by up/down arrow keys
+  char * fHPointer = fullHistory;
+  while (strsep(&fHPointer, "\n")); // replaces '\n' with 0 so when reading a line, pointer will stop at the end of each row
+  fHPointer = fullHistory; // returns fHPointer to lastest history entry
 
-    char *buffer = malloc(2048 * sizeof(char));
-    char *cursor = buffer;
-    *cursor = 0;
-    int c;
-    while (1) {
+  if (finished) return NULL;
+	if (isatty(fileno(stdin))) {
+      displayprompt();
+      enableinputmode();
+  }
+
+  char *buffer = malloc(2048 * sizeof(char));
+  char *cursor = buffer;
+  *cursor = 0;
+  int c;
+  while (1) {
+    c = getchar();
+    switch (c) {
+    // ignored:
+    case '\t':
+      break;
+    // escape sequences (handles arrow keys, ignores all else)
+    case '\e':
+      if ((c = getchar()) == '[') {
         c = getchar();
-        switch (c) {
-        // ignored:
-        case '\t':
-            break;
-        // escape sequences (handles arrow keys, ignores all else)
-        case '\e':
-            if ((c = getchar()) == '[') {
-                c = getchar();
-                switch (c) {
-      	        	case 'A': // UP
-                    // upHandler(fullHistory, upTo);
-                    if (fHPointer[0] != 0) {
-                      if (upTo != 0) {
-                        fHPointer += strlen(fHPointer) + 1;
-                      }
-                      // wipes over current input with spaces
-                      if (cursor > buffer)
-                        printf("\e[%luD", cursor - buffer);
-                      printf("\e[K");
+          switch (c) {
+      	   	case 'A': // UP
+              if (fHPointer[0] != 0) {
+                if (upTo != 0) {
+                  fHPointer += strlen(fHPointer) + 1; // read to the terminating 0 then add one to get to next line
+                }
+                // wipes over current input with spaces
+                if (cursor > buffer)
+                  printf("\e[%luD", cursor - buffer);
+                printf("\e[K");
+                strcpy(buffer, fHPointer);
+                cursor = buffer + strlen(buffer);
+                printf("%s", buffer);
+                upTo++;
+              }
+              break;
+      	     case 'B': // DOWN
+                // printf("\nupTo: %d\n", upTo);
+                if (upTo == 1) {
+                  // wipes over current input with spaces
+                  if (cursor > buffer)
+                    printf("\e[%luD", cursor - buffer);
+                  printf("\e[K");
 
-                      strcpy(buffer, fHPointer);
-                      cursor = buffer + strlen(buffer);
-                      printf("%s", buffer);
-                      upTo++;
-                    }
-                    break;
-      	          case 'B': // DOWN
-                    // printf("\nupTo: %d\n", upTo);
-      	            if (upTo == 1) {
-                      // wipes over current input with spaces
-                      if (cursor > buffer)
-                        printf("\e[%luD", cursor - buffer);
-                      printf("\e[K");
-                      
-                      strcpy(buffer, "");
-                      cursor = buffer;
-                      upTo--;
-                    } else if (upTo > 1) {
-                      // wipes over current input with spaces
-                      if (cursor > buffer)
-                        printf("\e[%luD", cursor - buffer);
-                      printf("\e[K");
+                  strcpy(buffer, "");
+                  cursor = buffer;
+                  upTo--;
+                } else if (upTo > 1) {
+                  // wipes over current input with spaces
+                  if (cursor > buffer)
+                    printf("\e[%luD", cursor - buffer);
+                  printf("\e[K");
 
-                      fHPointer -= 2;
-                      while (fHPointer[0] != 0) fHPointer--;
-                      fHPointer++;
+                  fHPointer -= 2;
+                  while (fHPointer[0] != 0) fHPointer--; // loops backwards to the previous 0
+                  fHPointer++;
 
-                      strcpy(buffer, fHPointer);
-                      cursor = buffer + strlen(buffer);
-                      printf("%s", buffer);
-                      upTo--;
-                    }
-      	            break;
-                case 'C': // RIGHT
-                    if (*cursor) { // don't move right if at terminating 0
+                  strcpy(buffer, fHPointer);
+                  cursor = buffer + strlen(buffer);
+                  printf("%s", buffer);
+                  upTo--;
+                }
+  	            break;
+            case 'C': // RIGHT
+                if (*cursor) { // don't move right if at terminating 0
+                    cursor++;
+                    printf("\e[C");
+                }
+                break;
+            case 'D': // LEFT
+                if (cursor != buffer) { // don't move left if at beginning of line
+                    cursor--;
+                    printf("\e[D");
+                }
+                break;
+            case '3':
+                if ((c = getchar()) == '~') { // DELETE
+                    if (*cursor) {
                         cursor++;
                         printf("\e[C");
-                    }
-                    break;
-                case 'D': // LEFT
-                    if (cursor != buffer) { // don't move left if at beginning of line
-                        cursor--;
-                        printf("\e[D");
-                    }
-                    break;
-                case '3':
-                    if ((c = getchar()) == '~') { // DELETE
-                        if (*cursor) {
-                            cursor++;
-                            printf("\e[C");
-                            goto dobackspace; // i got lazy
-                        }
+                        goto dobackspace;
                     }
                 }
             }
-            break;
-        case 127: // BACKSPACE
-            dobackspace:
-            if (cursor != buffer) { // don't erase if at beginning of line
-                cursor--;
-                delchar(cursor);
-                printf("\e[D");
-                printf("%s ", cursor);
-                unsigned long n = strlen(cursor) + 1;
-                printf("\e[%luD", n);
-            }
-            break;
-        case EOF:
-            finished = 1;
-        case '\n':
-            if (isatty(fileno(stdin))) printf("\n");
-            goto exitloop; // ill get around to making this cleaner
-        default:
-            // printf("%c", c);
-            insertchar(cursor, c);
-            cursor++;
-            if (isatty(fileno(stdin))) {
-                printf("%s", cursor - 1);
-                unsigned long n = strlen(cursor);
-                if (n) printf("\e[%luD", n);
-            }
-            break;
         }
+        break;
+    case 127: // BACKSPACE
+        dobackspace:
+        if (cursor != buffer) { // don't erase if at beginning of line
+            cursor--;
+            delchar(cursor);
+            printf("\e[D");
+            printf("%s ", cursor);
+            unsigned long n = strlen(cursor) + 1;
+            printf("\e[%luD", n);
+        }
+        break;
+    case EOF:
+        finished = 1;
+    case '\n':
+        if (isatty(fileno(stdin))) printf("\n");
+        goto exitloop; // ill get around to making this cleaner
+    default:
+        // printf("%c", c);
+        insertchar(cursor, c);
+        cursor++;
+        if (isatty(fileno(stdin))) {
+            printf("%s", cursor - 1);
+            unsigned long n = strlen(cursor);
+            if (n) printf("\e[%luD", n);
+        }
+        break;
+
+      }
         // printf("\n\"%s\"\n", buffer);
         // printf("\nc: '%c', i: %i\n", c, c);
-        fflush(stdout);
+      fflush(stdout);
     }
     exitloop:
     // printf("\nREAD LINE: \"%s\"\n", buffer);
 
-  	if (isatty(fileno(stdin)))
-        disableinputmode();
-    return buffer;
+    if (isatty(fileno(stdin)))
+      disableinputmode();
+  return buffer;
 }
 
 // for testing

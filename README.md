@@ -71,6 +71,14 @@ Reads a line of input, accounting for arrow keys, backspace, and delete. Returns
 ```c
 char * doread();
 ```
+Takes in a char pointer to the new command to add to history. Opens the file, adds the string to the file, a "\n" character, and then the preexisting history to the end of the file
+```c
+void write_in (char * toWrite);
+```
+Returns pointer to string of homepath/historyfile
+```c
+char * getHistFile();
+```
 ### `ast.c`
 (I know these are not functions, but they are worth mentioning.)  
 Represents the kind of an AST node.
