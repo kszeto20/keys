@@ -399,22 +399,22 @@ char * findlasttoplevel(char *str, char **needles, char **loc) {
     int i;
     for (i = strlen(str); i >= 0; i--) {
         switch (str[i]) {
-        case '(':
-            level++;
-            break;
-        case ')':
-            level--;
-            break;
-        case '"':
-            // moves i to next quote character not after a backslash:
-            while (str[++i] != '"') {
-                // intentional behavior: the input `"\\"` (quote, BS, BS, quote) should stop on the second quote
-                while (str[i] == '\\') i++;
-            }
-            break;
-        case '\\':
-            i++;
-            break;
+        // case '(':
+        //     level++;
+        //     break;
+        // case ')':
+        //     level--;
+        //     break;
+        // case '"':
+        //     // moves i to next quote character not after a backslash:
+        //     while (str[++i] != '"') {
+        //         // intentional behavior: the input `"\\"` (quote, BS, BS, quote) should stop on the second quote
+        //         while (str[i] == '\\') i++;
+        //     }
+        //     break;
+        // case '\\':
+        //     i++;
+        //     break;
         default:
             // must be at top level (level == 0) to match
             if (!level) {
